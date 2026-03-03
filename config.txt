@@ -1,3 +1,0 @@
-Local Server|http://localhost:8000/v1|sk-local
-OpenAI|https://api.openai.com/v1|sk-openai-key-here
-xAI|https://api.x.ai/v1|sk-xai-key-here

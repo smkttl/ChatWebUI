@@ -164,7 +164,7 @@
                 <label for="server-select">Server</label>
                 <select id="server-select">
                     {% for server in servers %}
-                    <option value="{{ server.name }}">{{ server.name }}</option>
+                    <option value="{{ server.name }}" data-api-type="{{ server.api_type }}">{{ server.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -195,9 +195,16 @@
         
         let messages = [];
         
+        // Get API type from selected server
+        function getSelectedApiType() {
+            const option = serverSelect.options[serverSelect.selectedIndex];
+            return option?.dataset?.apiType || 'openai';
+        }
+        
         // Load models when server changes
         serverSelect.addEventListener('change', async () => {
             const server = serverSelect.value;
+            const apiType = getSelectedApiType();
             modelSelect.innerHTML = '<option>Loading models...</option>';
             modelSelect.disabled = true;
             
@@ -245,6 +252,7 @@
             
             const server = serverSelect.value;
             const model = modelSelect.value;
+            const apiType = getSelectedApiType();
             
             if (!model || modelSelect.disabled) {
                 addMessage('error', 'Please select a model first');
@@ -271,7 +279,7 @@
                     body: JSON.stringify({
                         server,
                         model,
-                        messages: messages.slice(0, -1), // Without the empty assistant message
+                        messages: messages.slice(0, -1),
                         stream: true
                     })
                 });
@@ -288,25 +296,54 @@
                 const decoder = new TextDecoder();
                 let fullContent = '';
                 
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n').filter(line => line.trim() && line.startsWith('data: '));
-                    
-                    for (const line of lines) {
-                        const data = line.slice(6);
-                        if (data === '[DONE]') continue;
+                if (apiType === 'ollama') {
+                    // Ollama uses Server-Sent Events (text/event-stream)
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
                         
-                        try {
-                            const parsed = JSON.parse(data);
-                            const delta = parsed.choices?.[0]?.delta?.content || '';
-                            fullContent += delta;
-                            assistantMsg.textContent = fullContent;
-                            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                        } catch (e) {
-                            // Skip malformed JSON
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n');
+                        
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                const data = line.slice(6);
+                                if (data === '[DONE]') continue;
+                                
+                                try {
+                                    const parsed = JSON.parse(data);
+                                    const delta = parsed.message?.content || '';
+                                    fullContent += delta;
+                                    assistantMsg.textContent = fullContent;
+                                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                                } catch (e) {
+                                    // Skip malformed JSON
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // OpenAI-compatible API uses ndjson
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n').filter(line => line.trim() && line.startsWith('data: '));
+                        
+                        for (const line of lines) {
+                            const data = line.slice(6);
+                            if (data === '[DONE]') continue;
+                            
+                            try {
+                                const parsed = JSON.parse(data);
+                                const delta = parsed.choices?.[0]?.delta?.content || '';
+                                fullContent += delta;
+                                assistantMsg.textContent = fullContent;
+                                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                            } catch (e) {
+                                // Skip malformed JSON
+                            }
                         }
                     }
                 }

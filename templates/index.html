@@ -5,11 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Web UI</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #1a1a2e;
@@ -23,32 +19,33 @@
             padding: 1rem 2rem;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 2rem;
             border-bottom: 1px solid #0f3460;
         }
-        h1 {
-            font-size: 1.5rem;
-            color: #00d9ff;
+        h1 { font-size: 1.5rem; color: #00d9ff; }
+        .header-left { display: flex; align-items: center; gap: 2rem; }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        .user-info { color: #888; font-size: 0.9rem; }
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
         }
-        .controls {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-        label {
-            font-size: 0.75rem;
-            color: #888;
-            text-transform: uppercase;
-        }
+        .btn-primary { background: #00d9ff; color: #1a1a2e; }
+        .btn-primary:hover { background: #00b8d9; }
+        .btn-secondary { background: #0f3460; color: #fff; border: 1px solid #00d9ff; }
+        .btn-danger { background: #e94560; color: #fff; }
+        .btn-success { background: #28a745; color: #fff; }
+        .btn:disabled { background: #555; cursor: not-allowed; }
+        .controls { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+        .control-group { display: flex; flex-direction: column; gap: 0.25rem; }
+        label { font-size: 0.75rem; color: #888; text-transform: uppercase; }
         select {
-            background: #0f3460;
-            color: #fff;
+            background: #0f3460; color: #fff;
             border: 1px solid #00d9ff;
             padding: 0.5rem 1rem;
             border-radius: 4px;
@@ -56,10 +53,7 @@
             min-width: 200px;
             cursor: pointer;
         }
-        select:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.3);
-        }
+        select:focus { outline: none; box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.3); }
         #chat-container {
             flex: 1;
             display: flex;
@@ -69,142 +63,376 @@
             margin: 0 auto;
             padding: 1rem;
         }
-        #messages {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            padding-bottom: 1rem;
-        }
+        #messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; padding-bottom: 1rem; }
         .message {
-            padding: 1rem;
-            border-radius: 8px;
-            max-width: 85%;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            line-height: 1.5;
+            padding: 1rem; border-radius: 8px;
+            max-width: 85%; white-space: pre-wrap; word-wrap: break-word; line-height: 1.5;
         }
-        .message.user {
-            background: #0f3460;
-            align-self: flex-end;
-            border: 1px solid #00d9ff;
-        }
-        .message.assistant {
-            background: #16213e;
-            align-self: flex-start;
-            border: 1px solid #e94560;
-        }
-        .message.error {
-            background: #3d1a1a;
-            border: 1px solid #ff4444;
-            color: #ff8888;
-        }
-        .message Thinking {
-            color: #888;
-            font-style: italic;
-        }
+        .message.user { background: #0f3460; align-self: flex-end; border: 1px solid #00d9ff; }
+        .message.assistant { background: #16213e; align-self: flex-start; border: 1px solid #e94560; }
+        .message.error { background: #3d1a1a; border: 1px solid #ff4444; color: #ff8888; }
+        .message.Thinking { color: #888; font-style: italic; }
+        .streaming { color: #00d9ff; }
         #input-area {
-            display: flex;
-            gap: 0.5rem;
-            padding: 1rem;
-            background: #16213e;
-            border-radius: 8px;
-            border: 1px solid #0f3460;
+            display: flex; gap: 0.5rem; padding: 1rem;
+            background: #16213e; border-radius: 8px; border: 1px solid #0f3460;
         }
         #message-input {
-            flex: 1;
-            background: #0f3460;
-            color: #fff;
-            border: 1px solid #333;
-            padding: 0.75rem 1rem;
-            border-radius: 4px;
-            font-size: 1rem;
-            resize: none;
-            min-height: 50px;
-            font-family: inherit;
+            flex: 1; background: #0f3460; color: #fff;
+            border: 1px solid #333; padding: 0.75rem 1rem;
+            border-radius: 4px; font-size: 1rem; resize: none;
+            min-height: 50px; font-family: inherit;
         }
-        #message-input:focus {
-            outline: none;
-            border-color: #00d9ff;
+        #message-input:focus { outline: none; border-color: #00d9ff; }
+        #send-btn { background: #00d9ff; color: #1a1a2e; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+        #send-btn:hover { background: #00b8d9; }
+        #send-btn:disabled { background: #555; cursor: not-allowed; }
+        
+        /* Modal styles */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000;
         }
-        #send-btn {
-            background: #00d9ff;
-            color: #1a1a2e;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 4px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #16213e; padding: 2rem; border-radius: 8px;
+            max-width: 400px; width: 90%; border: 1px solid #0f3460;
         }
-        #send-btn:hover {
-            background: #00b8d9;
+        .modal h2 { margin-bottom: 1rem; color: #00d9ff; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; }
+        .form-group input {
+            width: 100%; padding: 0.75rem; border-radius: 4px;
+            background: #0f3460; color: #fff; border: 1px solid #333;
         }
-        #send-btn:disabled {
-            background: #555;
-            cursor: not-allowed;
+        .form-group input:focus { outline: none; border-color: #00d9ff; }
+        .modal-buttons { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem; }
+        
+        /* Admin panel */
+        #admin-panel {
+            display: none; max-width: 900px; width: 100%; margin: 0 auto; padding: 1rem;
         }
-        .thinking {
-            color: #888;
-            font-style: italic;
-            padding: 0.5rem;
-        }
-        .streaming {
-            color: #00d9ff;
-        }
+        #admin-panel.active { display: block; }
+        .user-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .user-table th, .user-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #0f3460; }
+        .user-table th { color: #00d9ff; }
+        .user-table .pending { color: #ffc107; }
+        .user-table .verified { color: #28a745; }
+        .user-actions { display: flex; gap: 0.5rem; }
+        
+        /* Main app (hidden when not logged in) */
+        #main-app { display: none; }
+        #main-app.active { display: flex; flex-direction: column; flex: 1; }
+        
+        /* Auth required message */
+        #auth-required { display: none; text-align: center; padding: 3rem; }
+        #auth-required.active { display: block; }
     </style>
 </head>
 <body>
     <header>
-        <h1>🤖 Chat Web UI</h1>
-        <div class="controls">
-            <div class="control-group">
-                <label for="server-select">Server</label>
-                <select id="server-select">
-                    {% for server in servers %}
-                    <option value="{{ server.name }}" data-api-type="{{ server.api_type }}">{{ server.name }}</option>
-                    {% endfor %}
-                </select>
+        <div class="header-left">
+            <h1>🤖 Chat Web UI</h1>
+            <div class="controls" id="server-controls" style="display: none;">
+                <div class="control-group">
+                    <label for="server-select">Server</label>
+                    <select id="server-select"></select>
+                </div>
+                <div class="control-group">
+                    <label for="model-select">Model</label>
+                    <select id="model-select" disabled><option>Select a server first</option></select>
+                </div>
             </div>
-            <div class="control-group">
-                <label for="model-select">Model</label>
-                <select id="model-select" disabled>
-                    <option>Select a server first</option>
-                </select>
-            </div>
+        </div>
+        <div class="header-right">
+            <span class="user-info" id="user-info" style="display: none;"></span>
+            <button class="btn btn-secondary" id="login-btn">Login</button>
+            <button class="btn btn-primary" id="register-btn">Register</button>
+            <button class="btn btn-danger" id="logout-btn" style="display: none;">Logout</button>
+            <button class="btn btn-secondary" id="admin-btn" style="display: none;">Admin</button>
         </div>
     </header>
     
-    <div id="chat-container">
-        <div id="messages"></div>
-        
-        <div id="input-area">
-            <textarea id="message-input" placeholder="Type your message..." rows="1"></textarea>
-            <button id="send-btn">Send</button>
+    <div id="auth-required">
+        <h2>Please login to use the chat</h2>
+        <p style="color: #888; margin-top: 1rem;">New users can register but need superuser verification.</p>
+    </div>
+    
+    <div id="main-app">
+        <div id="chat-container">
+            <div id="messages"></div>
+            <div id="input-area">
+                <textarea id="message-input" placeholder="Type your message..." rows="1"></textarea>
+                <button id="send-btn">Send</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="admin-panel">
+        <h2>User Management</h2>
+        <button class="btn btn-secondary" id="back-to-chat">← Back to Chat</button>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Usage</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="users-tbody"></tbody>
+        </table>
+    </div>
+    
+    <!-- Login Modal -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <h2>Login</h2>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="login-username">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="login-password">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" id="login-cancel">Cancel</button>
+                <button class="btn btn-primary" id="login-submit">Login</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Register Modal -->
+    <div class="modal" id="register-modal">
+        <div class="modal-content">
+            <h2>Register</h2>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="register-username">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="register-password">
+            </div>
+            <div class="form-group">
+                <label>Email (optional)</label>
+                <input type="email" id="register-email">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" id="register-cancel">Cancel</button>
+                <button class="btn btn-primary" id="register-submit">Register</button>
+            </div>
         </div>
     </div>
 
     <script>
+        let currentUser = null;
+        let messages = [];
+        
+        // Server and model from template
+        const servers = {{ servers | tojson }};
+        
+        // Populate server select
         const serverSelect = document.getElementById('server-select');
+        servers.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.name;
+            opt.textContent = s.name;
+            opt.dataset.apiType = s.api_type;
+            serverSelect.appendChild(opt);
+        });
+        
         const modelSelect = document.getElementById('model-select');
         const messageInput = document.getElementById('message-input');
         const sendBtn = document.getElementById('send-btn');
         const messagesDiv = document.getElementById('messages');
         
-        let messages = [];
+        // UI elements
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const adminBtn = document.getElementById('admin-btn');
+        const userInfo = document.getElementById('user-info');
+        const serverControls = document.getElementById('server-controls');
         
-        // Get API type from selected server
+        // Modals
+        const loginModal = document.getElementById('login-modal');
+        const registerModal = document.getElementById('register-modal');
+        
+        // Check auth status
+        async function checkAuth() {
+            try {
+                const resp = await fetch('/api/me');
+                if (resp.ok) {
+                    currentUser = await resp.json();
+                    showLoggedIn();
+                } else {
+                    showLoggedOut();
+                }
+            } catch {
+                showLoggedOut();
+            }
+        }
+        
+        function showLoggedIn() {
+            loginBtn.style.display = 'none';
+            registerBtn.style.display = 'none';
+            logoutBtn.style.display = 'block';
+            userInfo.style.display = 'block';
+            userInfo.textContent = currentUser.username + (currentUser.is_superuser ? ' (admin)' : '');
+            serverControls.style.display = 'flex';
+            document.getElementById('auth-required').classList.remove('active');
+            document.getElementById('main-app').classList.add('active');
+            
+            if (currentUser.is_superuser) {
+                adminBtn.style.display = 'block';
+            } else {
+                adminBtn.style.display = 'none';
+            }
+            
+            // Load models if server selected
+            if (serverSelect.value) {
+                serverSelect.dispatchEvent(new Event('change'));
+            }
+        }
+        
+        function showLoggedOut() {
+            currentUser = null;
+            loginBtn.style.display = 'block';
+            registerBtn.style.display = 'block';
+            logoutBtn.style.display = 'none';
+            adminBtn.style.display = 'none';
+            userInfo.style.display = 'none';
+            serverControls.style.display = 'none';
+            document.getElementById('auth-required').classList.add('active');
+            document.getElementById('main-app').classList.remove('active');
+            document.getElementById('admin-panel').classList.remove('active');
+        }
+        
+        // Modal handlers
+        loginBtn.onclick = () => loginModal.classList.add('active');
+        registerBtn.onclick = () => registerModal.classList.add('active');
+        document.getElementById('login-cancel').onclick = () => loginModal.classList.remove('active');
+        document.getElementById('register-cancel').onclick = () => registerModal.classList.remove('active');
+        
+        // Login
+        document.getElementById('login-submit').onclick = async () => {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            const resp = await fetch('/api/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, password})
+            });
+            
+            const data = await resp.json();
+            if (resp.ok) {
+                loginModal.classList.remove('active');
+                checkAuth();
+            } else {
+                alert(data.error || 'Login failed');
+            }
+        };
+        
+        // Register
+        document.getElementById('register-submit').onclick = async () => {
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+            const email = document.getElementById('register-email').value;
+            
+            const resp = await fetch('/api/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, password, email})
+            });
+            
+            const data = await resp.json();
+            if (resp.ok) {
+                registerModal.classList.remove('active');
+                alert(data.message);
+            } else {
+                alert(data.error || 'Registration failed');
+            }
+        };
+        
+        // Logout
+        logoutBtn.onclick = async () => {
+            await fetch('/api/logout', {method: 'POST'});
+            showLoggedOut();
+        };
+        
+        // Admin panel
+        adminBtn.onclick = async () => {
+            document.getElementById('main-app').classList.remove('active');
+            document.getElementById('admin-panel').classList.add('active');
+            loadUsers();
+        };
+        
+        document.getElementById('back-to-chat').onclick = () => {
+            document.getElementById('admin-panel').classList.remove('active');
+            document.getElementById('main-app').classList.add('active');
+        };
+        
+        async function loadUsers() {
+            const resp = await fetch('/api/users');
+            const data = await resp.json();
+            
+            const tbody = document.getElementById('users-tbody');
+            tbody.innerHTML = '';
+            
+            for (const user of data.users) {
+                const tr = document.createElement('tr');
+                const totalRequests = Object.values(user.usage || {}).reduce((sum, d) => sum + d.requests, 0);
+                
+                tr.innerHTML = `
+                    <td>${user.username}</td>
+                    <td>${user.email || '-'}</td>
+                    <td class="${user.is_verified ? 'verified' : 'pending'}">${user.is_verified ? 'Verified' : 'Pending'}</td>
+                    <td>${user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}</td>
+                    <td>${totalRequests} requests</td>
+                    <td class="user-actions">
+                        ${!user.is_superuser && !user.is_verified ? `
+                            <button class="btn btn-success btn-sm" onclick="verifyUser('${user.username}')">Verify</button>
+                            <button class="btn btn-danger btn-sm" onclick="rejectUser('${user.username}')">Reject</button>
+                        ` : '-'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+        
+        window.verifyUser = async (username) => {
+            await fetch('/api/verify', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, action: 'verify'})
+            });
+            loadUsers();
+        };
+        
+        window.rejectUser = async (username) => {
+            if (confirm(`Reject and remove user ${username}?`)) {
+                await fetch('/api/verify', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, action: 'reject'})
+                });
+                loadUsers();
+            }
+        };
+        
+        // Chat functionality
         function getSelectedApiType() {
             const option = serverSelect.options[serverSelect.selectedIndex];
             return option?.dataset?.apiType || 'openai';
         }
         
-        // Load models when server changes
         serverSelect.addEventListener('change', async () => {
             const server = serverSelect.value;
-            const apiType = getSelectedApiType();
             modelSelect.innerHTML = '<option>Loading models...</option>';
             modelSelect.disabled = true;
             
@@ -226,18 +454,15 @@
             }
         });
         
-        // Load models on page load if servers exist
         if (serverSelect.value) {
             serverSelect.dispatchEvent(new Event('change'));
         }
         
-        // Auto-resize textarea
         messageInput.addEventListener('input', () => {
             messageInput.style.height = 'auto';
             messageInput.style.height = messageInput.scrollHeight + 'px';
         });
         
-        // Send message on button click or Enter (Shift+Enter for newline)
         sendBtn.addEventListener('click', sendMessage);
         messageInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -259,13 +484,11 @@
                 return;
             }
             
-            // Add user message
             messages.push({ role: 'user', content });
             addMessage('user', content);
             messageInput.value = '';
             messageInput.style.height = 'auto';
             
-            // Add empty assistant message for streaming
             messages.push({ role: 'assistant', content: '' });
             const assistantMsg = addMessage('assistant', '');
             assistantMsg.classList.add('streaming');
@@ -276,12 +499,7 @@
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        server,
-                        model,
-                        messages: messages.slice(0, -1),
-                        stream: true
-                    })
+                    body: JSON.stringify({ server, model, messages: messages.slice(0, -1), stream: true })
                 });
                 
                 if (!response.ok) {
@@ -297,7 +515,6 @@
                 let fullContent = '';
                 
                 if (apiType === 'ollama') {
-                    // Ollama uses Server-Sent Events (text/event-stream)
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done) break;
@@ -316,14 +533,11 @@
                                     fullContent += delta;
                                     assistantMsg.textContent = fullContent;
                                     messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                                } catch (e) {
-                                    // Skip malformed JSON
-                                }
+                                } catch (e) {}
                             }
                         }
                     }
                 } else {
-                    // OpenAI-compatible API uses ndjson
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done) break;
@@ -341,9 +555,7 @@
                                 fullContent += delta;
                                 assistantMsg.textContent = fullContent;
                                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                            } catch (e) {
-                                // Skip malformed JSON
-                            }
+                            } catch (e) {}
                         }
                     }
                 }
@@ -368,6 +580,9 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
             return div;
         }
+        
+        // Initialize
+        checkAuth();
     </script>
 </body>
 </html>

@@ -37,24 +37,43 @@ def get_models():
     for server in servers:
         if server['name'] == server_name:
             try:
+                headers = {
+                    'Content-Type': 'application/json'
+                }
+                
+                # Add auth header if API key is provided
+                if server['api_key']:
+                    headers['Authorization'] = f"Bearer {server['api_key']}"
+                
                 if server['api_type'] == 'ollama':
-                    # Ollama uses /api/tags
-                    response = requests.get(
-                        f"{server['base_url']}/api/tags",
-                        timeout=10
-                    )
+                    # Ollama uses /api/tags for local, but cloud uses /models
+                    if server['api_key']:
+                        # Cloud Ollama - use /api/models endpoint
+                        response = requests.get(
+                            f"{server['base_url']}/models",
+                            headers=headers,
+                            timeout=10
+                        )
+                    else:
+                        # Local Ollama
+                        response = requests.get(
+                            f"{server['base_url']}/api/tags",
+                            timeout=10
+                        )
                     if response.status_code == 200:
                         data = response.json()
-                        models = [m.get('name', '') for m in data.get('models', [])]
+                        if server['api_key']:
+                            # Cloud response format
+                            models = [m.get('name', '') for m in data.get('models', [])]
+                        else:
+                            # Local response format
+                            models = [m.get('name', '') for m in data.get('models', [])]
                         return jsonify({'models': models})
                 else:
                     # OpenAI-compatible API
                     response = requests.get(
                         f"{server['base_url']}/models",
-                        headers={
-                            'Authorization': f"Bearer {server['api_key']}",
-                            'Content-Type': 'application/json'
-                        },
+                        headers=headers,
                         timeout=10
                     )
                     if response.status_code == 200:
@@ -84,8 +103,8 @@ def chat():
                 'Content-Type': 'application/json'
             }
             
-            # Add auth header for non-Ollama APIs
-            if server['api_type'] != 'ollama':
+            # Add auth header if API key is provided
+            if server['api_key']:
                 headers['Authorization'] = f"Bearer {server['api_key']}"
             
             # Build URL and payload based on API type
@@ -110,19 +129,19 @@ def chat():
                         response = requests.post(url, json=payload, headers=headers, stream=True, timeout=120)
                         
                         if server['api_type'] == 'ollama':
-                            # Ollama streaming format
+                            # Ollama streaming format (SSE)
                             for line in response.iter_lines():
                                 if line:
                                     line = line.decode('utf-8')
                                     if line.startswith('data: '):
                                         yield line + '\n'
                         else:
-                            # OpenAI-compatible streaming format
+                            # OpenAI-compatible streaming format (ndjson)
                             for chunk in response.iter_content(chunk_size=None):
                                 if chunk:
                                     yield chunk
                     
-                    content_type = 'application/x-ndjson' if server['api_type'] != 'ollama' else 'text/event-stream'
+                    content_type = 'text/event-stream' if server['api_type'] == 'ollama' else 'application/x-ndjson'
                     return Response(stream_with_context(generate()), content_type=content_type)
                 else:
                     response = requests.post(url, json=payload, headers=headers, timeout=120)

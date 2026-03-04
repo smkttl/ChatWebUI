@@ -1,0 +1,65 @@
+{
+  "username": "smkttl",
+  "password_hash": "753b8078bc04958384e39173529bd45b95e10ce7e86a43a3ec1cc732f9d2d8f4",
+  "email": "root@smkttl.cc.cd",
+  "is_verified": true,
+  "is_superuser": true,
+  "created_at": null,
+  "usage": {
+    "2026-03-04": {
+      "requests": 3,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    }
+  },
+  "chat_history": [
+    {
+      "id": "07576455-75be-42ed-ba07-f0fd1d700eba",
+      "server": "Ollama",
+      "model": "deepseek-v3.2:cloud",
+      "messages": [
+        {
+          "role": "user",
+          "content": "hi"
+        },
+        {
+          "role": "assistant",
+          "content": ""
+        }
+      ],
+      "timestamp": "2026-03-04T19:48:52.425602"
+    },
+    {
+      "id": "2eee2a3e-75d3-4541-b2d9-47367b5d92a9",
+      "server": "Ollama",
+      "model": "gemini-3-flash-preview:latest",
+      "messages": [
+        {
+          "role": "user",
+          "content": "hi"
+        },
+        {
+          "role": "assistant",
+          "content": ""
+        }
+      ],
+      "timestamp": "2026-03-04T19:57:52.406371"
+    },
+    {
+      "id": "ff2cc294-7099-4096-bfa5-4b8d890391b9",
+      "server": "Ollama",
+      "model": "gemini-3-flash-preview:latest",
+      "messages": [
+        {
+          "role": "user",
+          "content": "hi"
+        },
+        {
+          "role": "assistant",
+          "content": ""
+        }
+      ],
+      "timestamp": "2026-03-04T21:08:30.778362"
+    }
+  ]
+}

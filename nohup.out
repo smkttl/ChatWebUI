@@ -1,0 +1,42 @@
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://154.9.254.29:5000
+[33mPress CTRL+C to quit[0m
+114.249.195.211 - - [04/Mar/2026 19:48:28] "GET / HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 19:48:28] "[31m[1mGET /api/models?server=Ollama HTTP/1.1[0m" 401 -
+114.249.195.211 - - [04/Mar/2026 19:48:28] "[31m[1mGET /api/me HTTP/1.1[0m" 401 -
+114.249.195.211 - - [04/Mar/2026 19:48:41] "POST /api/login HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 19:48:41] "GET /api/me HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 19:48:42] "GET /api/models?server=Ollama HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 19:48:52] "POST /api/chat HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 19:48:58] "GET /api/users HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 19:57:41] "GET / HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 19:57:42] "GET /api/me HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 19:57:42] "GET /api/models?server=Ollama HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 19:57:42] "GET /api/models?server=Ollama HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 19:57:52] "POST /api/chat HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 19:58:00] "GET /api/users HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 19:58:00] "GET /api/users HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 19:58:05] "GET / HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 19:58:05] "GET /api/models?server=Ollama HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 19:58:05] "GET /api/me HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 19:58:06] "GET /api/models?server=Ollama HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 20:24:17] "GET / HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 20:24:18] "GET /api/me HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 20:24:18] "GET /api/models?server=Ollama HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 20:24:18] "GET /api/models?server=Ollama HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 21:07:53] code 400, message Bad request version ('"Ló\x15C\x18Æ°Ö3#©,êÉ\x93è\x03\x16\x8e\x87\x87\x08\x80gpJ`Ì5F46Zfa\x07Z3\x8a¬Q\x90w\x18BL¼\x8c\x19\x86d\x80ã1')
+114.249.195.211 - - [04/Mar/2026 21:07:53] "[35m[1m\x16\x03\x01\x06À\x01\x00\x06¼\x03\x03ó\x0eÑÇØmó3%4uD¬\x9féÇÆr¥µÅ°\x04\x8få²ëÙ\x8fùÖÉ ¸@îC³ó\x99ÇR¼*J \x95\x7feIËiõ\x807\x13Ðkvè\x00Î¯cÝ\x00 ªª\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06S\x9a\x9a\x00\x00\x00\x10\x00\x0e\x00\x0c\x02h2\x08http/1.1\x00\x0d\x00\x12\x00\x10\x04\x03\x08\x04\x04\x01\x05\x03\x08\x05\x05\x01\x08\x06\x06\x01\x00\x17\x00\x00DÍ\x00\x05\x00\x03\x02h2\x00+\x00\x07\x06úú\x03\x04\x03\x03\x003\x04ï\x04íºº\x00\x01\x00\x11ì\x04ÀsF°,Ë¼ß\x97P«·!¼6-®¶½!RqUÖqª\x96±ìÂ|«WK2x¬\x9c:,æ¬o\x9c\x0b¿õÓ/\x963 7x\x06\x90\x81¦â\x88¼M³U\x13K\x03ÿ\x912Ýp§.@°Õ\x93`v\x9a/x*\x88\x88Ð²ÎdItÜ\x05´\x13gÐ\x09]fÛ\x89g XäÌ\x0ez£M\x93ê\x9c\x88aÁ=\x86itVxPà¦(#\x8cB"\x93q55Ö:£9éw«\x1aÀ\x0dù*\x88r[\x1f6\x95Ç:@GÙ\x9aÉH=¤U²\x14\x83pd`N:ÃXªÓÃiÕ\x9a\x0c¨\x94²\x03\x00Qt\x90!©´7ªy\x18rqÅÖ:J¼Çù8slê\x08#{)]\x0bsý\x17\x09¯Fd[ø<òú*¹\x09"Ló\x15C\x18Æ°Ö3#©,êÉ\x93è\x03\x16\x8e\x87\x87\x08\x80gpJ`Ì5F46Zfa\x07Z3\x8a¬Q\x90w\x18BL¼\x8c\x19\x86d\x80ã1[0m" HTTPStatus.BAD_REQUEST -
+114.249.195.211 - - [04/Mar/2026 21:07:53] code 400, message Bad request version ('\x13\x08?ö×«á')
+114.249.195.211 - - [04/Mar/2026 21:07:53] "[35m[1m\x16\x03\x01\x07\x00\x01\x00\x06ü\x03\x03o¬úå[0\x00[¢Î\x00ê&t\x02\x18¬#\x03 á#®ïÌ\x9a\x9a½\x1dXxç äNu1î\x9eÿóö\x9d$·\x12óu\x18,b}ÉVÈJÈ\x804ÕGì`°´\x00 zz\x13\x01\x13\x02\x13\x03À+À/À,À0Ì©Ì¨À\x13À\x14\x00\x9c\x00\x9d\x00/\x005\x01\x00\x06\x93\x1a\x1a\x00\x00\x00\x1b\x00\x03\x02\x00\x02\x003\x04ï\x04íêê\x00\x01\x00\x11ì\x04ÀÌ\x84\x00Oø\x81t°%úå¢p7m\x1eJ\x8ade\x81k\x91$§æ-\x8d§\x04\x87L\x08£¶=\x19ä5\x15\x14\x84ÔµSã)\x81\x8b%\x01\x1e3Áè,i+ö[¾÷ÍÂ¼\x9eÊõ9oZ{\x1få\x09\x13\x08?ö×«á[0m" HTTPStatus.BAD_REQUEST -
+114.249.195.211 - - [04/Mar/2026 21:08:00] "GET / HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 21:08:01] "[31m[1mGET /api/models?server=Ollama HTTP/1.1[0m" 401 -
+114.249.195.211 - - [04/Mar/2026 21:08:01] "[31m[1mGET /api/me HTTP/1.1[0m" 401 -
+114.249.195.211 - - [04/Mar/2026 21:08:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+114.249.195.211 - - [04/Mar/2026 21:08:24] "POST /api/login HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 21:08:25] "GET /api/me HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 21:08:25] "GET /api/models?server=Ollama HTTP/1.1" 200 -
+114.249.195.211 - - [04/Mar/2026 21:08:30] "POST /api/chat HTTP/1.1" 200 -

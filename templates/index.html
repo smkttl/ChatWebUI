@@ -31,8 +31,8 @@
             padding: 0.5rem 1rem;
             border-radius: 4px;
             border: none;
-            cursor: pointer;
-            font-size: 0.9rem;
+                       font-size: 0.9rem; cursor: pointer;
+ 0.9rem;
             transition: background 0.2s;
         }
         .btn-primary { background: #00d9ff; color: #1a1a2e; }
@@ -71,7 +71,18 @@
         .message.user { background: #0f3460; align-self: flex-end; border: 1px solid #00d9ff; }
         .message.assistant { background: #16213e; align-self: flex-start; border: 1px solid #e94560; }
         .message.error { background: #3d1a1a; border: 1px solid #ff4444; color: #ff8888; }
-        .message.Thinking { color: #888; font-style: italic; }
+        .message .thinking {
+            color: #888;
+            font-style: italic;
+            border-left: 3px solid #ffc107;
+            padding-left: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .message .thinking-label {
+            color: #ffc107;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
         .streaming { color: #00d9ff; }
         #input-area {
             display: flex; gap: 0.5rem; padding: 1rem;
@@ -88,7 +99,6 @@
         #send-btn:hover { background: #00b8d9; }
         #send-btn:disabled { background: #555; cursor: not-allowed; }
         
-        /* Modal styles */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000;
@@ -108,10 +118,7 @@
         .form-group input:focus { outline: none; border-color: #00d9ff; }
         .modal-buttons { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem; }
         
-        /* Admin panel */
-        #admin-panel {
-            display: none; max-width: 900px; width: 100%; margin: 0 auto; padding: 1rem;
-        }
+        #admin-panel { display: none; max-width: 900px; width: 100%; margin: 0 auto; padding: 1rem; }
         #admin-panel.active { display: block; }
         .user-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
         .user-table th, .user-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #0f3460; }
@@ -120,11 +127,9 @@
         .user-table .verified { color: #28a745; }
         .user-actions { display: flex; gap: 0.5rem; }
         
-        /* Main app (hidden when not logged in) */
-        #main-app { display: none; }
-        #main-app.active { display: flex; flex-direction: column; flex: 1; }
+        #main-app { display: none; flex-direction: column; flex: 1; }
+        #main-app.active { display: flex; }
         
-        /* Auth required message */
         #auth-required { display: none; text-align: center; padding: 3rem; }
         #auth-required.active { display: block; }
     </style>
@@ -232,10 +237,8 @@
         let currentUser = null;
         let messages = [];
         
-        // Server and model from template
         const servers = {{ servers | tojson }};
         
-        // Populate server select
         const serverSelect = document.getElementById('server-select');
         servers.forEach(s => {
             const opt = document.createElement('option');
@@ -250,7 +253,6 @@
         const sendBtn = document.getElementById('send-btn');
         const messagesDiv = document.getElementById('messages');
         
-        // UI elements
         const loginBtn = document.getElementById('login-btn');
         const registerBtn = document.getElementById('register-btn');
         const logoutBtn = document.getElementById('logout-btn');
@@ -258,11 +260,9 @@
         const userInfo = document.getElementById('user-info');
         const serverControls = document.getElementById('server-controls');
         
-        // Modals
         const loginModal = document.getElementById('login-modal');
         const registerModal = document.getElementById('register-modal');
         
-        // Check auth status
         async function checkAuth() {
             try {
                 const resp = await fetch('/api/me');
@@ -286,14 +286,8 @@
             serverControls.style.display = 'flex';
             document.getElementById('auth-required').classList.remove('active');
             document.getElementById('main-app').classList.add('active');
+            adminBtn.style.display = currentUser.is_superuser ? 'block' : 'none';
             
-            if (currentUser.is_superuser) {
-                adminBtn.style.display = 'block';
-            } else {
-                adminBtn.style.display = 'none';
-            }
-            
-            // Load models if server selected
             if (serverSelect.value) {
                 serverSelect.dispatchEvent(new Event('change'));
             }
@@ -312,13 +306,11 @@
             document.getElementById('admin-panel').classList.remove('active');
         }
         
-        // Modal handlers
         loginBtn.onclick = () => loginModal.classList.add('active');
         registerBtn.onclick = () => registerModal.classList.add('active');
         document.getElementById('login-cancel').onclick = () => loginModal.classList.remove('active');
         document.getElementById('register-cancel').onclick = () => registerModal.classList.remove('active');
         
-        // Login
         document.getElementById('login-submit').onclick = async () => {
             const username = document.getElementById('login-username').value;
             const password = document.getElementById('login-password').value;
@@ -338,7 +330,6 @@
             }
         };
         
-        // Register
         document.getElementById('register-submit').onclick = async () => {
             const username = document.getElementById('register-username').value;
             const password = document.getElementById('register-password').value;
@@ -359,13 +350,11 @@
             }
         };
         
-        // Logout
         logoutBtn.onclick = async () => {
             await fetch('/api/logout', {method: 'POST'});
             showLoggedOut();
         };
         
-        // Admin panel
         adminBtn.onclick = async () => {
             document.getElementById('main-app').classList.remove('active');
             document.getElementById('admin-panel').classList.add('active');
@@ -425,7 +414,6 @@
             }
         };
         
-        // Chat functionality
         function getSelectedApiType() {
             const option = serverSelect.options[serverSelect.selectedIndex];
             return option?.dataset?.apiType || 'openai';
@@ -513,6 +501,7 @@
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let fullContent = '';
+                let fullThinking = '';
                 
                 if (apiType === 'ollama') {
                     while (true) {
@@ -529,9 +518,25 @@
                                 
                                 try {
                                     const parsed = JSON.parse(data);
-                                    const delta = parsed.message?.content || '';
-                                    fullContent += delta;
-                                    assistantMsg.textContent = fullContent;
+                                    const msg = parsed.message || {};
+                                    const thinking = msg.thinking || '';
+                                    const contentDelta = msg.content || '';
+                                    
+                                    if (thinking) {
+                                        fullThinking += thinking;
+                                        // Update thinking display
+                                        let thinkingDiv = assistantMsg.querySelector('.thinking');
+                                        if (!thinkingDiv) {
+                                            thinkingDiv = document.createElement('div');
+                                            thinkingDiv.className = 'thinking';
+                                            assistantMsg.insertBefore(thinkingDiv, assistantMsg.firstChild);
+                                        }
+                                        thinkingDiv.textContent = fullThinking;
+                                    }
+                                    if (contentDelta) {
+                                        fullContent += contentDelta;
+                                        assistantMsg.textContent = fullContent;
+                                    }
                                     messagesDiv.scrollTop = messagesDiv.scrollHeight;
                                 } catch (e) {}
                             }
@@ -560,7 +565,7 @@
                     }
                 }
                 
-                messages[messages.length - 1].content = fullContent;
+                messages[messages.length - 1] = { role: 'assistant', content: fullContent, thinking: fullThinking || undefined };
                 assistantMsg.classList.remove('streaming');
                 
             } catch (err) {
@@ -575,13 +580,29 @@
         function addMessage(role, content) {
             const div = document.createElement('div');
             div.className = `message ${role}`;
-            div.textContent = content;
+            
+            if (role === 'assistant' && typeof content === 'object') {
+                // Handle object with thinking and content
+                if (content.thinking) {
+                    const thinkingDiv = document.createElement('div');
+                    thinkingDiv.className = 'thinking';
+                    thinkingDiv.textContent = content.thinking;
+                    div.appendChild(thinkingDiv);
+                }
+                if (content.content) {
+                    const contentDiv = document.createElement('span');
+                    contentDiv.textContent = content.content;
+                    div.appendChild(contentDiv);
+                }
+            } else {
+                div.textContent = content;
+            }
+            
             messagesDiv.appendChild(div);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
             return div;
         }
         
-        // Initialize
         checkAuth();
     </script>
 </body>

@@ -1,0 +1,110 @@
+{
+  "username": "codex",
+  "password_hash": "1ca345f365fa056a647376d233a18885284414ac013d4e36b0461b19a270a745",
+  "email": "codex@example.com",
+  "is_verified": true,
+  "is_superuser": true,
+  "created_at": null,
+  "usage": {
+    "2026-03-04": {
+      "requests": 6,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    }
+  },
+  "chat_history": [
+    {
+      "id": "6fbdfc97-b136-42cf-bc35-0b7b38313fce",
+      "server": "Ollama",
+      "model": "deepseek-v3.2:cloud",
+      "messages": [
+        {
+          "role": "user",
+          "content": "say hello"
+        },
+        {
+          "role": "assistant",
+          "content": ""
+        }
+      ],
+      "timestamp": "2026-03-04T20:57:43.745935"
+    },
+    {
+      "id": "9195b82b-9c8f-48e8-ba32-bc495e9af6fd",
+      "server": "Ollama",
+      "model": "deepseek-v3.2:cloud",
+      "messages": [
+        {
+          "role": "user",
+          "content": "hi"
+        },
+        {
+          "role": "assistant",
+          "content": ""
+        }
+      ],
+      "timestamp": "2026-03-04T20:59:24.347190"
+    },
+    {
+      "id": "e758bbec-2d71-4ed5-a3cd-d9ab5c4188c7",
+      "server": "Ollama",
+      "model": "deepseek-v3.2:cloud",
+      "messages": [
+        {
+          "role": "user",
+          "content": "say hi"
+        },
+        {
+          "role": "assistant"
+        }
+      ],
+      "timestamp": "2026-03-04T21:10:44.668493"
+    },
+    {
+      "id": "352cbf29-531f-4680-b227-b98586b99717",
+      "server": "Ollama",
+      "model": "deepseek-v3.2:cloud",
+      "messages": [
+        {
+          "role": "user",
+          "content": "hi"
+        },
+        {
+          "role": "assistant"
+        }
+      ],
+      "timestamp": "2026-03-04T21:11:07.198751"
+    },
+    {
+      "id": "500e15e0-d637-4ede-936f-8726e714b0c7",
+      "server": "Ollama",
+      "model": "deepseek-v3.2:cloud",
+      "messages": [
+        {
+          "role": "user",
+          "content": "hi"
+        },
+        {
+          "role": "assistant"
+        }
+      ],
+      "timestamp": "2026-03-04T21:11:51.498054"
+    },
+    {
+      "id": "faee3d9e-fbbe-4e39-9d3b-439d47c64196",
+      "server": "Ollama",
+      "model": "deepseek-v3.2:cloud",
+      "messages": [
+        {
+          "role": "user",
+          "content": "hi"
+        },
+        {
+          "role": "assistant",
+          "thinking": "\u4f60\u597d\uff01\ud83d\ude0a \u5f88\u9ad8\u5174\u89c1\u5230\u4f60\uff01\u6211\u662f\u4e00\u6b3eAI\u52a9\u624b\uff0c\u968f\u65f6\u51c6\u5907\u4e3a\u4f60\u63d0\u4f9b\u5e2e\u52a9\u3002\n\n\u65e0\u8bba\u662f\u56de\u7b54\u95ee\u9898\u3001\u534f\u52a9\u601d\u8003\u3001\u8ba8\u8bba\u95ee\u9898\uff0c\u8fd8\u662f\u9700\u8981\u521b\u4f5c\u3001\u5206\u6790\u6216\u65e5\u5e38\u804a\u5929\uff0c\u6211\u90fd\u5f88\u4e50\u610f\u548c\u4f60\u4ea4\u6d41\uff01\n\n\u6709\u4ec0\u4e48\u7279\u522b\u60f3\u804a\u7684\u8bdd\u9898\u6216\u8005\u9700\u8981\u6211\u5e2e\u5fd9\u7684\u5730\u65b9\u5417\uff1f"
+        }
+      ],
+      "timestamp": "2026-03-04T21:15:57.670200"
+    }
+  ]
+}

@@ -10,20 +10,18 @@ from flask import Flask, render_template, request, jsonify, Response, stream_wit
 import requests
 
 app = Flask(__name__)
-app.secret_key = os.urandom(32)  # Secure secret key
+app.secret_key = os.urandom(32)
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'config.txt')
 USERDATA_DIR = os.path.join(os.path.dirname(__file__), 'userdata')
 SESSION_FILE = os.path.join(USERDATA_DIR, 'sessions.json')
 
-# Ensure directories exist
 os.makedirs(USERDATA_DIR, exist_ok=True)
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 def load_servers():
-    """Load servers from config file. Format: Name|BaseURL|APIKey|APIType"""
     servers = []
     with open(CONFIG_FILE, 'r') as f:
         for line in f:
@@ -65,12 +63,10 @@ def get_current_user():
     session_token = session.get('session_token')
     if not session_token:
         return None
-    
     sessions = load_sessions()
     username = sessions.get(session_token)
     if not username:
         return None
-    
     return load_user(username)
 
 def login_required(f):
@@ -100,11 +96,9 @@ def record_usage(username, model, prompt_tokens=0, completion_tokens=0):
     if user:
         if 'usage' not in user:
             user['usage'] = {}
-        
         date_key = datetime.now().strftime('%Y-%m-%d')
         if date_key not in user['usage']:
             user['usage'][date_key] = {'requests': 0, 'prompt_tokens': 0, 'completion_tokens': 0}
-        
         user['usage'][date_key]['requests'] += 1
         user['usage'][date_key]['prompt_tokens'] += prompt_tokens
         user['usage'][date_key]['completion_tokens'] += completion_tokens
@@ -115,8 +109,6 @@ def record_chat_history(username, server, model, messages):
     if user:
         if 'chat_history' not in user:
             user['chat_history'] = []
-        
-        # Store conversation (limit to last 100)
         conversation = {
             'id': str(uuid.uuid4()),
             'server': server,
@@ -125,11 +117,8 @@ def record_chat_history(username, server, model, messages):
             'timestamp': datetime.now().isoformat()
         }
         user['chat_history'].append(conversation)
-        
-        # Keep only last 100 conversations
         if len(user['chat_history']) > 100:
             user['chat_history'] = user['chat_history'][-100:]
-        
         save_user(user)
 
 @app.route('/')
@@ -161,7 +150,6 @@ def register():
         "usage": {},
         "chat_history": []
     }
-    
     save_user(user_data)
     return jsonify({'message': 'Registration successful. Please wait for superuser verification.'})
 
@@ -181,12 +169,10 @@ def login():
     if not user.get('is_verified'):
         return jsonify({'error': 'Account not verified by superuser'}), 403
     
-    # Create session
     session_token = str(uuid.uuid4())
     sessions = load_sessions()
     sessions[session_token] = username
     save_sessions(sessions)
-    
     session['session_token'] = session_token
     
     return jsonify({
@@ -203,7 +189,6 @@ def logout():
         sessions.pop(session_token, None)
         save_sessions(sessions)
         session.pop('session_token', None)
-    
     return jsonify({'message': 'Logged out'})
 
 @app.route('/api/me', methods=['GET'])
@@ -219,7 +204,6 @@ def get_me():
 @app.route('/api/history', methods=['GET'])
 @login_required
 def get_history():
-    """Get chat history for current user"""
     user = g.current_user
     history = user.get('chat_history', [])
     return jsonify({'history': history})
@@ -227,7 +211,6 @@ def get_history():
 @app.route('/api/history', methods=['DELETE'])
 @login_required
 def clear_history():
-    """Clear chat history for current user"""
     user = g.current_user
     user['chat_history'] = []
     save_user(user)
@@ -250,7 +233,6 @@ def list_users():
                     'usage': user.get('usage', {}),
                     'chat_history_count': len(user.get('chat_history', []))
                 })
-    
     return jsonify({'users': users})
 
 @app.route('/api/verify', methods=['POST'])
@@ -258,7 +240,7 @@ def list_users():
 def verify_user():
     data = request.json
     username = data.get('username')
-    action = data.get('action')  # 'verify' or 'reject'
+    action = data.get('action')
     
     user = load_user(username)
     if not user:
@@ -277,7 +259,6 @@ def verify_user():
 @app.route('/api/models')
 @login_required
 def get_models():
-    """Get available models for a given server"""
     server_name = request.args.get('server')
     servers = load_servers()
     
@@ -285,32 +266,20 @@ def get_models():
         if server['name'] == server_name:
             try:
                 headers = {'Content-Type': 'application/json'}
-                
                 if server['api_key']:
                     headers['Authorization'] = f"Bearer {server['api_key']}"
                 
                 if server['api_type'] == 'ollama':
                     if server['api_key']:
-                        response = requests.get(
-                            f"{server['base_url']}/models",
-                            headers=headers,
-                            timeout=10
-                        )
+                        response = requests.get(f"{server['base_url']}/models", headers=headers, timeout=10)
                     else:
-                        response = requests.get(
-                            f"{server['base_url']}/api/tags",
-                            timeout=10
-                        )
+                        response = requests.get(f"{server['base_url']}/api/tags", timeout=10)
                     if response.status_code == 200:
                         data = response.json()
                         models = [m.get('name', '') for m in data.get('models', [])]
                         return jsonify({'models': models})
                 else:
-                    response = requests.get(
-                        f"{server['base_url']}/models",
-                        headers=headers,
-                        timeout=10
-                    )
+                    response = requests.get(f"{server['base_url']}/models", headers=headers, timeout=10)
                     if response.status_code == 200:
                         data = response.json()
                         models = [m.get('id', '') for m in data.get('data', [])]
@@ -324,7 +293,6 @@ def get_models():
 @app.route('/api/chat', methods=['POST'])
 @login_required
 def chat():
-    """Proxy chat requests to the selected server"""
     data = request.json
     server_name = data.get('server')
     messages = data.get('messages', [])
@@ -337,7 +305,6 @@ def chat():
     for server in servers:
         if server['name'] == server_name:
             headers = {'Content-Type': 'application/json'}
-            
             if server['api_key']:
                 headers['Authorization'] = f"Bearer {server['api_key']}"
             
@@ -354,22 +321,30 @@ def chat():
                         response = requests.post(url, json=payload, headers=headers, stream=True, timeout=120)
                         
                         full_content = ''
+                        full_thinking = ''
                         prompt_tokens = 0
                         completion_tokens = 0
                         
                         if server['api_type'] == 'ollama':
+                            # Ollama returns raw JSON lines, not SSE with 'data: ' prefix
                             for line in response.iter_lines():
                                 if line:
-                                    line = line.decode('utf-8')
-                                    if line.startswith('data: '):
-                                        yield line + '\n'
-                                        try:
-                                            parsed = json.loads(line[6:])
-                                            if 'message' in parsed:
-                                                full_content += parsed['message'].get('content', '')
-                                        except:
-                                            pass
+                                    line_decoded = line.decode('utf-8')
+                                    # Yield as SSE for frontend compatibility
+                                    yield f"data: {line_decoded}\n\n"
+                                    try:
+                                        parsed = json.loads(line_decoded)
+                                        msg = parsed.get('message', {})
+                                        thinking = msg.get('thinking', '')
+                                        content = msg.get('content', '')
+                                        if thinking:
+                                            full_thinking += thinking
+                                        if content:
+                                            full_content += content
+                                    except:
+                                        pass
                         else:
+                            # OpenAI-compatible uses SSE with 'data: ' prefix
                             for chunk in response.iter_content(chunk_size=None):
                                 if chunk:
                                     yield chunk
@@ -386,11 +361,15 @@ def chat():
                                     except:
                                         pass
                         
-                        # Record usage and history
                         record_usage(username, model, prompt_tokens, completion_tokens)
                         
-                        # Save chat to history (include full conversation)
-                        conversation = messages + [{'role': 'assistant', 'content': full_content}]
+                        assistant_msg = {'role': 'assistant'}
+                        if full_thinking:
+                            assistant_msg['thinking'] = full_thinking
+                        if full_content:
+                            assistant_msg['content'] = full_content
+                        
+                        conversation = messages + [assistant_msg]
                         record_chat_history(username, server_name, model, conversation)
                     
                     content_type = 'text/event-stream' if server['api_type'] == 'ollama' else 'application/x-ndjson'
@@ -399,14 +378,17 @@ def chat():
                     response = requests.post(url, json=payload, headers=headers, timeout=120)
                     resp_json = response.json()
                     
-                    # Record usage for non-streaming
                     prompt_tokens = resp_json.get('usage', {}).get('prompt_tokens', 0)
                     completion_tokens = resp_json.get('usage', {}).get('completion_tokens', 0)
                     record_usage(username, model, prompt_tokens, completion_tokens)
                     
-                    # Save chat to history
-                    full_content = resp_json.get('choices', [{}])[0].get('message', {}).get('content', '')
-                    conversation = messages + [{'role': 'assistant', 'content': full_content}]
+                    assistant_msg = {'role': 'assistant'}
+                    msg = resp_json.get('choices', [{}])[0].get('message', {})
+                    if msg.get('thinking'):
+                        assistant_msg['thinking'] = msg['thinking']
+                    if msg.get('content'):
+                        assistant_msg['content'] = msg['content']
+                    conversation = messages + [assistant_msg]
                     record_chat_history(username, server_name, model, conversation)
                     
                     return jsonify(resp_json)
@@ -420,7 +402,5 @@ if __name__ == '__main__':
     parser.add_argument('--host', default='0.0.0.0', help='Host to bind to (default: 0.0.0.0)')
     parser.add_argument('-p', '--port', type=int, default=5000, help='Port to bind to (default: 5000)')
     parser.add_argument('--debug', action='store_true', help='Enable debug mode')
-    
     args = parser.parse_args()
-    
     app.run(host=args.host, port=args.port, debug=args.debug)

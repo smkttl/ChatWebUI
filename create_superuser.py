@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import hashlib
+import getpass
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -17,9 +18,14 @@ def create_superuser(username, email=""):
         print(f"Error: User '{username}' already exists")
         sys.exit(1)
     
+    password = getpass.getpass("Enter password: ")
+    if not password:
+        print("Error: Password cannot be empty")
+        sys.exit(1)
+    
     user_data = {
         "username": username,
-        "password_hash": hash_password(input("Enter password: ")),
+        "password_hash": hash_password(password),
         "email": email,
         "is_verified": True,
         "is_superuser": True,

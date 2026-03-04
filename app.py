@@ -1,7 +1,9 @@
 import os
+import sys
 import json
 import hashlib
 import uuid
+import argparse
 from datetime import datetime
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context, session, g
@@ -224,7 +226,6 @@ def verify_user():
     if action == 'verify':
         user['is_verified'] = True
     elif action == 'reject':
-        # Optionally delete the user
         user_file = os.path.join(USERDATA_DIR, f"{username}.json")
         os.remove(user_file)
         return jsonify({'message': f'User {username} rejected and removed'})
@@ -367,4 +368,11 @@ def chat():
     return jsonify({'error': 'Server not found'}), 404
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    parser = argparse.ArgumentParser(description='Chat Web UI Server')
+    parser.add_argument('--host', default='0.0.0.0', help='Host to bind to (default: 0.0.0.0)')
+    parser.add_argument('-p', '--port', type=int, default=5000, help='Port to bind to (default: 5000)')
+    parser.add_argument('--debug', action='store_true', help='Enable debug mode')
+    
+    args = parser.parse_args()
+    
+    app.run(host=args.host, port=args.port, debug=args.debug)

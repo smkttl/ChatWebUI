@@ -110,6 +110,28 @@ def record_usage(username, model, prompt_tokens=0, completion_tokens=0):
         user['usage'][date_key]['completion_tokens'] += completion_tokens
         save_user(user)
 
+def record_chat_history(username, server, model, messages):
+    user = load_user(username)
+    if user:
+        if 'chat_history' not in user:
+            user['chat_history'] = []
+        
+        # Store conversation (limit to last 100)
+        conversation = {
+            'id': str(uuid.uuid4()),
+            'server': server,
+            'model': model,
+            'messages': messages,
+            'timestamp': datetime.now().isoformat()
+        }
+        user['chat_history'].append(conversation)
+        
+        # Keep only last 100 conversations
+        if len(user['chat_history']) > 100:
+            user['chat_history'] = user['chat_history'][-100:]
+        
+        save_user(user)
+
 @app.route('/')
 def index():
     servers = load_servers()
@@ -136,7 +158,8 @@ def register():
         "is_verified": False,
         "is_superuser": False,
         "created_at": datetime.now().isoformat(),
-        "usage": {}
+        "usage": {},
+        "chat_history": []
     }
     
     save_user(user_data)
@@ -193,6 +216,23 @@ def get_me():
         'is_superuser': user.get('is_superuser', False)
     })
 
+@app.route('/api/history', methods=['GET'])
+@login_required
+def get_history():
+    """Get chat history for current user"""
+    user = g.current_user
+    history = user.get('chat_history', [])
+    return jsonify({'history': history})
+
+@app.route('/api/history', methods=['DELETE'])
+@login_required
+def clear_history():
+    """Clear chat history for current user"""
+    user = g.current_user
+    user['chat_history'] = []
+    save_user(user)
+    return jsonify({'message': 'Chat history cleared'})
+
 @app.route('/api/users', methods=['GET'])
 @superuser_required
 def list_users():
@@ -207,7 +247,8 @@ def list_users():
                     'is_verified': user.get('is_verified', False),
                     'is_superuser': user.get('is_superuser', False),
                     'created_at': user.get('created_at'),
-                    'usage': user.get('usage', {})
+                    'usage': user.get('usage', {}),
+                    'chat_history_count': len(user.get('chat_history', []))
                 })
     
     return jsonify({'users': users})
@@ -326,7 +367,6 @@ def chat():
                                             parsed = json.loads(line[6:])
                                             if 'message' in parsed:
                                                 full_content += parsed['message'].get('content', '')
-                                            # Ollama doesn't always provide token counts
                                         except:
                                             pass
                         else:
@@ -340,15 +380,18 @@ def chat():
                                                 if parsed.get('choices'):
                                                     delta = parsed['choices'][0].get('delta', {}).get('content', '')
                                                     full_content += delta
-                                                # Try to get token counts
                                                 usage = parsed.get('usage', {})
                                                 prompt_tokens = usage.get('prompt_tokens', 0)
                                                 completion_tokens = usage.get('completion_tokens', 0)
                                     except:
                                         pass
                         
-                        # Record usage
+                        # Record usage and history
                         record_usage(username, model, prompt_tokens, completion_tokens)
+                        
+                        # Save chat to history (include full conversation)
+                        conversation = messages + [{'role': 'assistant', 'content': full_content}]
+                        record_chat_history(username, server_name, model, conversation)
                     
                     content_type = 'text/event-stream' if server['api_type'] == 'ollama' else 'application/x-ndjson'
                     return Response(stream_with_context(generate()), content_type=content_type)
@@ -360,6 +403,11 @@ def chat():
                     prompt_tokens = resp_json.get('usage', {}).get('prompt_tokens', 0)
                     completion_tokens = resp_json.get('usage', {}).get('completion_tokens', 0)
                     record_usage(username, model, prompt_tokens, completion_tokens)
+                    
+                    # Save chat to history
+                    full_content = resp_json.get('choices', [{}])[0].get('message', {}).get('content', '')
+                    conversation = messages + [{'role': 'assistant', 'content': full_content}]
+                    record_chat_history(username, server_name, model, conversation)
                     
                     return jsonify(resp_json)
             except Exception as e:

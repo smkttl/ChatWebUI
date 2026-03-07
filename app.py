@@ -96,6 +96,12 @@ def clean_model_name(model_name):
     name = re.sub(r'^qwen3$', 'qwen', name)
     name = re.sub(r'^qwen3\s', 'qwen ', name)
     
+    # Remove size indicators (70b, 120b, 17b, etc.) if no duplication
+    name = re.sub(r'\s+120b$', '', name)
+    name = re.sub(r'\s+70b$', '', name)
+    name = re.sub(r'\s+17b\s+16e$', '', name)
+    name = re.sub(r'\s+17b$', '', name)
+    
     # Replace multiple spaces with single
     name = re.sub(r'\s+', ' ', name)
     

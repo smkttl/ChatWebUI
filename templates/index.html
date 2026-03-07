@@ -403,12 +403,15 @@
                         <div>${(totalPromptBytes / 1024).toFixed(1)}K / ${(totalCompletionBytes / 1024).toFixed(1)}K bytes</div>
                     </td>
                     <td class="user-actions">
-                        ${!user.is_superuser && !user.is_verified ? `
-                            <button class="btn btn-success btn-sm" onclick="verifyUser('${user.username}')">Verify</button>
-                            <button class="btn btn-danger btn-sm" onclick="rejectUser('${user.username}')">Reject</button>
-                        ` : '-'}
-                    </td>
                 `;
+                
+                // Add action buttons
+                if (!user.is_superuser && !user.is_verified) {
+                    const actionsCell = tr.querySelector('.user-actions');
+                    actionsCell.innerHTML = '<button class="btn btn-success btn-sm" onclick="verifyUser(\'' + user.username + '\')">Verify</button> ' +
+                        '<button class="btn btn-danger btn-sm" onclick="rejectUser(\'' + user.username + '\')">Reject</button>';
+                }
+                
                 tbody.appendChild(tr);
             }
         }

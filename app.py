@@ -31,6 +31,10 @@ SESSION_FILE = os.path.join(USERDATA_DIR, 'sessions.json')
 MODELS_CACHE = {}
 MODELS_CACHE_TTL = 1800  # 5 minutes
 
+# Failed models cache: {server_name: {model_name: timestamp}}
+FAILED_MODELS_CACHE = {}
+FAILED_MODELS_CACHE_TTL = 1800  # 30 minutes
+
 os.makedirs(USERDATA_DIR, exist_ok=True)
 
 def hash_password(password):

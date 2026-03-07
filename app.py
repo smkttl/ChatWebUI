@@ -53,24 +53,53 @@ def load_servers():
     return servers
 
 def clean_model_name(model_name):
-    """Clean model name by removing suffixes and special characters."""
-    name = model_name.lower()
+    """Clean model name for readable display in 'Any' server."""
+    name = model_name.lower().strip()
     
-    # Remove prefix before '/' if present (e.g., 'anthropic/claude-3' -> 'claude-3')
-    if '/' in name:
-        name = name.split('/')[-1]
+    # Remove provider prefixes
+    prefixes = ['groq/', 'meta-llama/', 'moonshotai/', 'openai/', 'qwen/', 'anthropic/']
+    for prefix in prefixes:
+        if name.startswith(prefix):
+            name = name[len(prefix):]
+            break
     
-    # Remove :cloud, :latest suffixes (case insensitive)
-    name = re.sub(r':(cloud|latest)$', '', name)
+    # Remove useless suffixes in order (longer first)
+    suffixes_to_remove = [
+        '-chat-latest-ca', '-chat-latest', '-latest-ca',
+        '-ca', '-chat', ':cloud', '-cloud', '-latest',
+    ]
+    for suffix in suffixes_to_remove:
+        if name.endswith(suffix):
+            name = name[:-len(suffix)]
     
-    # Remove dates: YYYY-MM-DD or YYYY
-    name = re.sub(r'-\d{4}-\d{2}-\d{2}', '', name)
-    name = re.sub(r'\d{4}', '', name)
+    # Remove dates/timestamps
+    name = re.sub(r'-\d{2,6}(-\d{2})?$', '', name)
+    name = re.sub(r'-\d{3,6}(-\d{2})?(?!\w)', '', name)
     
-    # Remove special characters: :, ., -
-    name = re.sub(r'[:.\-]', '', name)
+    # Replace : and - with space (keep version dots)
+    name = re.sub(r'[:\-]', ' ', name)
     
-    return name
+    # Clean up patterns like "3.5 241b a28b" -> "3.5 241b"
+    name = re.sub(r'\s+a\d+b?(?!\w)', '', name)
+    
+    # Remove useless tags
+    useless_tags = ['preview', 'instruct', 'thinking', 'think', 'pro', 'plus', 'vl', 'versatile']
+    for tag in useless_tags:
+        name = re.sub(rf'\s+{tag}$', '', name)
+        name = re.sub(rf'\s+{tag}\s', ' ', name)
+    
+    # Normalize: internvl3.5 -> internvl
+    name = re.sub(r'^internvl3\.5', 'internvl', name)
+    name = re.sub(r'^internvl\s*3\.5', 'internvl', name)
+    
+    # Normalize: qwen3 -> qwen (standalone)
+    name = re.sub(r'^qwen3$', 'qwen', name)
+    name = re.sub(r'^qwen3\s', 'qwen ', name)
+    
+    # Replace multiple spaces with single
+    name = re.sub(r'\s+', ' ', name)
+    
+    return name.strip()
 
 def get_any_server_data():
     """Get all models from all servers and return cleaned/merged list for 'Any' server."""

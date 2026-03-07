@@ -384,7 +384,6 @@
             tbody.innerHTML = '';
             
             for (const user of data.users) {
-                const tr = document.createElement('tr');
                 const usage = user.usage || {};
                 const totalRequests = Object.values(usage).reduce((sum, d) => sum + (d.requests || 0), 0);
                 const totalPromptTokens = Object.values(usage).reduce((sum, d) => sum + (d.prompt_tokens || 0), 0);
@@ -392,28 +391,28 @@
                 const totalPromptBytes = Object.values(usage).reduce((sum, d) => sum + (d.prompt_bytes || 0), 0);
                 const totalCompletionBytes = Object.values(usage).reduce((sum, d) => sum + (d.completion_bytes || 0), 0);
                 
-                tr.innerHTML = `
-                    <td>${user.username}</td>
-                    <td>${user.email || '-'}</td>
-                    <td class="${user.is_verified ? 'verified' : 'pending'}">${user.is_verified ? 'Verified' : 'Pending'}</td>
-                    <td>${user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}</td>
-                    <td>
-                        <div>${totalRequests} requests</div>
-                        <div>${totalPromptTokens} / ${totalCompletionTokens} tokens</div>
-                        <div>${(totalPromptBytes / 1024).toFixed(1)}K / ${(totalCompletionBytes / 1024).toFixed(1)}K bytes</div>
-                    </td>
-                    <td class="user-actions">
-                `;
-                
-                // Add action buttons
+                let actionButtons = '-';
                 if (!user.is_superuser && !user.is_verified) {
-                    const actionsCell = tr.querySelector('.user-actions');
-                    actionsCell.innerHTML = '<button class="btn btn-success btn-sm" onclick="verifyUser(\'' + user.username + '\')">Verify</button> ' +
-                        '<button class="btn btn-danger btn-sm" onclick="rejectUser(\'' + user.username + '\')">Reject</button>';
+                    actionButtons = '<button class="btn btn-success btn-sm" data-action="verify" data-user="' + user.username + '">Verify</button> <button class="btn btn-danger btn-sm" data-action="reject" data-user="' + user.username + '">Reject</button>';
                 }
                 
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td>' + user.username + '</td><td>' + (user.email || '-') + '</td><td class="' + (user.is_verified ? 'verified' : 'pending') + '">' + (user.is_verified ? 'Verified' : 'Pending') + '</td><td>' + (user.created_at ? new Date(user.created_at).toLocaleDateString() : '-') + '</td><td><div>' + totalRequests + ' requests</div><div>' + totalPromptTokens + ' / ' + totalCompletionTokens + ' tokens</div><div>' + (totalPromptBytes / 1024).toFixed(1) + 'K / ' + (totalCompletionBytes / 1024).toFixed(1) + 'K bytes</div></td><td class="user-actions">' + actionButtons + '</td>';
                 tbody.appendChild(tr);
             }
+            
+            // Add event listeners for action buttons
+            tbody.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const action = e.target.dataset.action;
+                    const username = e.target.dataset.user;
+                    if (action === 'verify') {
+                        await window.verifyUser(username);
+                    } else if (action === 'reject') {
+                        await window.rejectUser(username);
+                    }
+                });
+            });
         }
         
         window.verifyUser = async (username) => {

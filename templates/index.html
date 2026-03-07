@@ -410,6 +410,8 @@
                     const username = e.target.dataset.user;
                     if (action === 'verify') {
                         await window.verifyUser(username);
+                    } else if (action === 'disable') {
+                        await window.disableUser(username);
                     } else if (action === 'reject') {
                         await window.rejectUser(username);
                     }
@@ -424,6 +426,17 @@
                 body: JSON.stringify({username, action: 'verify'})
             });
             loadUsers();
+        };
+        
+        window.disableUser = async (username) => {
+            if (confirm(`Disable user ${username}? They will need to re-verify.`)) {
+                await fetch('/api/verify', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, action: 'disable'})
+                });
+                loadUsers();
+            }
         };
         
         window.rejectUser = async (username) => {

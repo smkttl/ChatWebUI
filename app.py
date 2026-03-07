@@ -4,10 +4,19 @@ import json
 import hashlib
 import uuid
 import argparse
+import logging
 from datetime import datetime
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context, session, g
 import requests
+
+# Configure logging to stdout
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    stream=sys.stdout
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(32)
@@ -271,22 +280,34 @@ def get_models():
                 
                 if server['api_type'] == 'ollama':
                     if server['api_key']:
-                        response = requests.get(f"{server['base_url']}/models", headers=headers, timeout=10)
+                        url = f"{server['base_url']}/models"
                     else:
-                        response = requests.get(f"{server['base_url']}/api/tags", timeout=10)
-                    if response.status_code == 200:
-                        data = response.json()
-                        models = [m.get('name', '') for m in data.get('models', [])]
-                        return jsonify({'models': models})
+                        url = f"{server['base_url']}/api/tags"
+                    response = requests.get(url, timeout=10)
                 else:
-                    response = requests.get(f"{server['base_url']}/models", headers=headers, timeout=10)
-                    if response.status_code == 200:
-                        data = response.json()
-                        models = [m.get('id', '') for m in data.get('data', [])]
-                        return jsonify({'models': models})
-                return jsonify({'error': f'Failed to fetch models: {response.status_code}'}), 400
+                    url = f"{server['base_url']}/models"
+                    response = requests.get(url, headers=headers, timeout=10)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    models = [m.get('name', '') for m in data.get('models', [])]
+                    return jsonify({'models': models})
+                else:
+                    error_msg = f"API returned status {response.status_code}: {response.text[:200]}"
+                    logger.error(f"Models API error for {server_name}: {error_msg}")
+                    return jsonify({'error': error_msg}), 400
+            except requests.exceptions.Timeout:
+                error_msg = f"Request timeout when fetching models from {server_name}"
+                logger.error(error_msg)
+                return jsonify({'error': error_msg}), 504
+            except requests.exceptions.ConnectionError as e:
+                error_msg = f"Connection error to {server_name}: {str(e)[:200]}"
+                logger.error(error_msg)
+                return jsonify({'error': error_msg}), 503
             except Exception as e:
-                return jsonify({'error': str(e)}), 400
+                error_msg = f"Error fetching models: {str(e)[:200]}"
+                logger.error(f"Models API error for {server_name}: {error_msg}")
+                return jsonify({'error': error_msg}), 500
     
     return jsonify({'error': 'Server not found'}), 404
 
@@ -315,68 +336,105 @@ def chat():
                 url = f"{server['base_url']}/chat/completions"
                 payload = {'model': model, 'messages': messages, 'stream': stream}
             
+            logger.info(f"Chat request: server={server_name}, model={model}, stream={stream}")
+            
             try:
                 if stream:
                     def generate():
-                        response = requests.post(url, json=payload, headers=headers, stream=True, timeout=120)
-                        
-                        full_content = ''
-                        full_thinking = ''
-                        prompt_tokens = 0
-                        completion_tokens = 0
-                        
-                        if server['api_type'] == 'ollama':
-                            # Ollama returns raw JSON lines, not SSE with 'data: ' prefix
-                            for line in response.iter_lines():
-                                if line:
-                                    line_decoded = line.decode('utf-8')
-                                    # Yield as SSE for frontend compatibility
-                                    yield f"data: {line_decoded}\n\n"
-                                    try:
-                                        parsed = json.loads(line_decoded)
-                                        msg = parsed.get('message', {})
-                                        thinking = msg.get('thinking', '')
-                                        content = msg.get('content', '')
-                                        if thinking:
-                                            full_thinking += thinking
-                                        if content:
-                                            full_content += content
-                                    except:
-                                        pass
-                        else:
-                            # OpenAI-compatible uses SSE with 'data: ' prefix
-                            for chunk in response.iter_content(chunk_size=None):
-                                if chunk:
-                                    yield chunk
-                                    try:
-                                        for line in chunk.decode('utf-8').split('\n'):
-                                            if line.startswith('data: '):
-                                                parsed = json.loads(line[6:])
-                                                if parsed.get('choices'):
-                                                    delta = parsed['choices'][0].get('delta', {}).get('content', '')
-                                                    full_content += delta
-                                                usage = parsed.get('usage', {})
-                                                prompt_tokens = usage.get('prompt_tokens', 0)
-                                                completion_tokens = usage.get('completion_tokens', 0)
-                                    except:
-                                        pass
-                        
-                        record_usage(username, model, prompt_tokens, completion_tokens)
-                        
-                        assistant_msg = {'role': 'assistant'}
-                        if full_thinking:
-                            assistant_msg['thinking'] = full_thinking
-                        if full_content:
-                            assistant_msg['content'] = full_content
-                        
-                        conversation = messages + [assistant_msg]
-                        record_chat_history(username, server_name, model, conversation)
+                        try:
+                            response = requests.post(url, json=payload, headers=headers, stream=True, timeout=120)
+                            
+                            if response.status_code != 200:
+                                error_msg = f"API returned status {response.status_code}: {response.text[:500]}"
+                                logger.error(f"Chat API error: {error_msg}")
+                                yield f"data: {json.dumps({'error': error_msg})}\n\n"
+                                return
+                            
+                            full_content = ''
+                            full_thinking = ''
+                            prompt_tokens = 0
+                            completion_tokens = 0
+                            
+                            if server['api_type'] == 'ollama':
+                                for line in response.iter_lines():
+                                    if line:
+                                        line_decoded = line.decode('utf-8')
+                                        yield f"data: {line_decoded}\n\n"
+                                        try:
+                                            parsed = json.loads(line_decoded)
+                                            if parsed.get('error'):
+                                                logger.error(f"Ollama API error: {parsed['error']}")
+                                            msg = parsed.get('message', {})
+                                            thinking = msg.get('thinking', '')
+                                            content = msg.get('content', '')
+                                            if thinking:
+                                                full_thinking += thinking
+                                            if content:
+                                                full_content += content
+                                        except:
+                                            pass
+                            else:
+                                for chunk in response.iter_content(chunk_size=None):
+                                    if chunk:
+                                        yield chunk
+                                        try:
+                                            for line in chunk.decode('utf-8').split('\n'):
+                                                if line.startswith('data: '):
+                                                    data_str = line[6:]
+                                                    if data_str == '[DONE]':
+                                                        continue
+                                                    parsed = json.loads(data_str)
+                                                    if parsed.get('error'):
+                                                        logger.error(f"API error: {parsed['error']}")
+                                                    if parsed.get('choices'):
+                                                        delta = parsed['choices'][0].get('delta', {}).get('content', '')
+                                                        full_content += delta
+                                                    usage = parsed.get('usage', {})
+                                                    prompt_tokens = usage.get('prompt_tokens', 0)
+                                                    completion_tokens = usage.get('completion_tokens', 0)
+                                        except:
+                                            pass
+                            
+                            record_usage(username, model, prompt_tokens, completion_tokens)
+                            
+                            assistant_msg = {'role': 'assistant'}
+                            if full_thinking:
+                                assistant_msg['thinking'] = full_thinking
+                            if full_content:
+                                assistant_msg['content'] = full_content
+                            
+                            conversation = messages + [assistant_msg]
+                            record_chat_history(username, server_name, model, conversation)
+                            
+                        except requests.exceptions.Timeout:
+                            error_msg = "Request timeout after 120 seconds"
+                            logger.error(f"Chat API timeout: {error_msg}")
+                            yield f"data: {json.dumps({'error': error_msg})}\n\n"
+                        except requests.exceptions.ConnectionError as e:
+                            error_msg = f"Connection error: {str(e)[:200]}"
+                            logger.error(f"Chat API connection error: {error_msg}")
+                            yield f"data: {json.dumps({'error': error_msg})}\n\n"
+                        except Exception as e:
+                            error_msg = f"Error during streaming: {str(e)[:200]}"
+                            logger.error(f"Chat API error: {error_msg}")
+                            yield f"data: {json.dumps({'error': error_msg})}\n\n"
                     
                     content_type = 'text/event-stream' if server['api_type'] == 'ollama' else 'application/x-ndjson'
                     return Response(stream_with_context(generate()), content_type=content_type)
                 else:
                     response = requests.post(url, json=payload, headers=headers, timeout=120)
+                    
+                    if response.status_code != 200:
+                        error_msg = f"API returned status {response.status_code}: {response.text[:500]}"
+                        logger.error(f"Chat API error: {error_msg}")
+                        return jsonify({'error': error_msg}), response.status_code
+                    
                     resp_json = response.json()
+                    
+                    if resp_json.get('error'):
+                        error_msg = resp_json['error']
+                        logger.error(f"Chat API error: {error_msg}")
+                        return jsonify({'error': error_msg}), 400
                     
                     prompt_tokens = resp_json.get('usage', {}).get('prompt_tokens', 0)
                     completion_tokens = resp_json.get('usage', {}).get('completion_tokens', 0)
@@ -392,8 +450,19 @@ def chat():
                     record_chat_history(username, server_name, model, conversation)
                     
                     return jsonify(resp_json)
+                    
+            except requests.exceptions.Timeout:
+                error_msg = "Request timeout after 120 seconds"
+                logger.error(f"Chat API timeout for {server_name}: {error_msg}")
+                return jsonify({'error': error_msg}), 504
+            except requests.exceptions.ConnectionError as e:
+                error_msg = f"Connection error to {server_name}: {str(e)[:200]}"
+                logger.error(error_msg)
+                return jsonify({'error': error_msg}), 503
             except Exception as e:
-                return jsonify({'error': str(e)}), 500
+                error_msg = f"Error: {str(e)[:200]}"
+                logger.error(f"Chat API error for {server_name}: {error_msg}")
+                return jsonify({'error': error_msg}), 500
     
     return jsonify({'error': 'Server not found'}), 404
 

@@ -66,7 +66,7 @@ def clean_model_name(model_name):
     # Remove useless suffixes in order (longer first)
     suffixes_to_remove = [
         '-chat-latest-ca', '-chat-latest', '-latest-ca',
-        '-ca', '-chat', ':cloud', '-cloud', '-latest',
+        '-ca', '-chat', ':cloud', '-cloud', '-latest', ':latest',
     ]
     for suffix in suffixes_to_remove:
         if name.endswith(suffix):
@@ -78,9 +78,6 @@ def clean_model_name(model_name):
     
     # Replace : and - with space (keep version dots)
     name = re.sub(r'[:\-]', ' ', name)
-    
-    # Clean up patterns like "3.5 241b a28b" -> "3.5 241b"
-    name = re.sub(r'\s+a\d+b?(?!\w)', '', name)
     
     # Remove useless tags
     useless_tags = ['preview', 'instruct', 'thinking', 'think', 'pro', 'plus', 'vl', 'versatile']
@@ -96,11 +93,15 @@ def clean_model_name(model_name):
     name = re.sub(r'^qwen3$', 'qwen', name)
     name = re.sub(r'^qwen3\s', 'qwen ', name)
     
-    # Remove size indicators (70b, 120b, 17b, etc.) if no duplication
-    name = re.sub(r'\s+120b$', '', name)
-    name = re.sub(r'\s+70b$', '', name)
-    name = re.sub(r'\s+17b\s+16e$', '', name)
-    name = re.sub(r'\s+17b$', '', name)
+    # Automatically remove size indicators (70b, 120b, 17b, 241b, 32b, etc.)
+    name = re.sub(r'\s+\d+b(?:\s+\d+[eb])*$', '', name)
+    name = re.sub(r'\s+\d+e(?:\s+\d+[eb])*$', '', name)
+    
+    # Remove "16k" suffix (context window size)
+    name = re.sub(r'\s+16k$', '', name)
+    
+    # Remove alphanumeric codes at the end (like 30ba3b, a22b)
+    name = re.sub(r'\s+[0-9a-z]{3,}$', '', name)
     
     # Replace multiple spaces with single
     name = re.sub(r'\s+', ' ', name)

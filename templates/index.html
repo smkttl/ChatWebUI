@@ -390,8 +390,12 @@
                 const totalCompletionBytes = Object.values(usage).reduce((sum, d) => sum + (d.completion_bytes || 0), 0);
                 
                 let actionButtons = '-';
-                if (!user.is_superuser && !user.is_verified) {
-                    actionButtons = '<button class="btn btn-success btn-sm" data-action="verify" data-user="' + user.username + '">Verify</button> <button class="btn btn-danger btn-sm" data-action="reject" data-user="' + user.username + '">Reject</button>';
+                if (!user.is_superuser) {
+                    if (user.is_verified) {
+                        actionButtons = '<button class="btn btn-warning btn-sm" data-action="disable" data-user="' + user.username + '">Disable</button>';
+                    } else {
+                        actionButtons = '<button class="btn btn-success btn-sm" data-action="verify" data-user="' + user.username + '">Verify</button> <button class="btn btn-danger btn-sm" data-action="reject" data-user="' + user.username + '">Reject</button>';
+                    }
                 }
                 
                 const tr = document.createElement('tr');

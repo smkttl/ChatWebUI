@@ -404,13 +404,15 @@ def verify_user():
     
     if action == 'verify':
         user['is_verified'] = True
+    elif action == 'disable':
+        user['is_verified'] = False
     elif action == 'reject':
         user_file = os.path.join(USERDATA_DIR, f"{username}.json")
         os.remove(user_file)
         return jsonify({'message': f'User {username} rejected and removed'})
     
     save_user(user)
-    return jsonify({'message': f'User {username} {"verified" if action == "verify" else action}'})
+    return jsonify({'message': f'User {username} {"verified" if action == "verify" else "disabled" if action == "disable" else action}'})
 
 @app.route('/api/models')
 @login_required

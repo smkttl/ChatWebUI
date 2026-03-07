@@ -518,6 +518,12 @@
                                 
                                 try {
                                     const parsed = JSON.parse(data);
+                                    if (parsed.error) {
+                                        assistantMsg.textContent = `Error: ${parsed.error}`;
+                                        assistantMsg.classList.remove('streaming');
+                                        assistantMsg.classList.add('error');
+                                        return;
+                                    }
                                     const msg = parsed.message || {};
                                     const thinking = msg.thinking || '';
                                     const contentDelta = msg.content || '';
@@ -556,6 +562,12 @@
                             
                             try {
                                 const parsed = JSON.parse(data);
+                                if (parsed.error) {
+                                    assistantMsg.textContent = `Error: ${parsed.error}`;
+                                    assistantMsg.classList.remove('streaming');
+                                    assistantMsg.classList.add('error');
+                                    return;
+                                }
                                 const delta = parsed.choices?.[0]?.delta?.content || '';
                                 fullContent += delta;
                                 assistantMsg.textContent = fullContent;

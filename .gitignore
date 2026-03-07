@@ -1,2 +1,3 @@
 config.txt
 userdata/
+__pycache__/

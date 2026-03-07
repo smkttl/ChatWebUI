@@ -240,6 +240,16 @@
         const servers = {{ servers | tojson }};
         
         const serverSelect = document.getElementById('server-select');
+        
+        // Add "Any" server first
+        const anyOpt = document.createElement('option');
+        anyOpt.value = 'Any';
+        anyOpt.textContent = 'Any';
+        anyOpt.dataset.apiType = 'any';
+        anyOpt.selected = true;
+        serverSelect.appendChild(anyOpt);
+        
+        // Add other servers
         servers.forEach(s => {
             const opt = document.createElement('option');
             opt.value = s.name;

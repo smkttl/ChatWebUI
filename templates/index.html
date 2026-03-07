@@ -386,8 +386,6 @@
             for (const user of data.users) {
                 const usage = user.usage || {};
                 const totalRequests = Object.values(usage).reduce((sum, d) => sum + (d.requests || 0), 0);
-                const totalPromptTokens = Object.values(usage).reduce((sum, d) => sum + (d.prompt_tokens || 0), 0);
-                const totalCompletionTokens = Object.values(usage).reduce((sum, d) => sum + (d.completion_tokens || 0), 0);
                 const totalPromptBytes = Object.values(usage).reduce((sum, d) => sum + (d.prompt_bytes || 0), 0);
                 const totalCompletionBytes = Object.values(usage).reduce((sum, d) => sum + (d.completion_bytes || 0), 0);
                 
@@ -397,7 +395,7 @@
                 }
                 
                 const tr = document.createElement('tr');
-                tr.innerHTML = '<td>' + user.username + '</td><td>' + (user.email || '-') + '</td><td class="' + (user.is_verified ? 'verified' : 'pending') + '">' + (user.is_verified ? 'Verified' : 'Pending') + '</td><td>' + (user.created_at ? new Date(user.created_at).toLocaleDateString() : '-') + '</td><td><div>' + totalRequests + ' requests</div><div>' + totalPromptTokens + ' / ' + totalCompletionTokens + ' tokens</div><div>' + (totalPromptBytes / 1024).toFixed(1) + 'K / ' + (totalCompletionBytes / 1024).toFixed(1) + 'K bytes</div></td><td class="user-actions">' + actionButtons + '</td>';
+                tr.innerHTML = '<td>' + user.username + '</td><td>' + (user.email || '-') + '</td><td class="' + (user.is_verified ? 'verified' : 'pending') + '">' + (user.is_verified ? 'Verified' : 'Pending') + '</td><td>' + (user.created_at ? new Date(user.created_at).toLocaleDateString() : '-') + '</td><td><div>' + totalRequests + ' requests</div><div>' + (totalPromptBytes / 1024).toFixed(1) + 'K / ' + (totalCompletionBytes / 1024).toFixed(1) + 'K bytes</div></td><td class="user-actions">' + actionButtons + '</td>';
                 tbody.appendChild(tr);
             }
             

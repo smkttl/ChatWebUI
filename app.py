@@ -238,17 +238,17 @@ def superuser_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def record_usage(username, model, prompt_tokens=0, completion_tokens=0, prompt_bytes=0, completion_bytes=0):
+def record_usage(username, model, prompt_bytes=0, completion_bytes=0):
     user = load_user(username)
     if user:
         if 'usage' not in user:
             user['usage'] = {}
         date_key = datetime.now().strftime('%Y-%m-%d')
         if date_key not in user['usage']:
-            user['usage'][date_key] = {'requests': 0, 'prompt_tokens': 0, 'completion_tokens': 0, 'prompt_bytes': 0, 'completion_bytes': 0}
+            user['usage'][date_key] = {'requests': 0, 'prompt_bytes': 0, 'completion_bytes': 0}
         user['usage'][date_key]['requests'] += 1
-        user['usage'][date_key]['prompt_tokens'] += prompt_tokens
-        user['usage'][date_key]['completion_tokens'] += completion_tokens
+        
+        
         user['usage'][date_key]['prompt_bytes'] += prompt_bytes
         user['usage'][date_key]['completion_bytes'] += completion_bytes
         save_user(user)
@@ -596,7 +596,7 @@ def chat():
                                 
                                 prompt_bytes = len(json.dumps(messages).encode('utf-8'))
                                 completion_bytes = len(full_content.encode('utf-8'))
-                                record_usage(username, actual_model, prompt_tokens, completion_tokens, prompt_bytes, completion_bytes)
+                                record_usage(username, actual_model, prompt_bytes, completion_bytes)
                                 
                                 assistant_msg = {'role': 'assistant'}
                                 if full_thinking:
@@ -645,7 +645,7 @@ def chat():
                         prompt_bytes = len(json.dumps(messages).encode('utf-8'))
                         completion_content = resp_json.get('choices', [{}])[0].get('message', {}).get('content', '')
                         completion_bytes = len(completion_content.encode('utf-8'))
-                        record_usage(username, actual_model, prompt_tokens, completion_tokens, prompt_bytes, completion_bytes)
+                        record_usage(username, actual_model, prompt_bytes, completion_bytes)
                         
                         assistant_msg = {'role': 'assistant'}
                         msg = resp_json.get('choices', [{}])[0].get('message', {})
@@ -710,7 +710,8 @@ def chat():
                             
                             full_content = ''
                             full_thinking = ''
-                            prompt_tokens = 0
+                            prompt_bytes = 0
+                            completion_bytes = 0
                             completion_tokens = 0
                             
                             if server['api_type'] == 'ollama':
@@ -747,13 +748,10 @@ def chat():
                                                     if parsed.get('choices'):
                                                         delta = parsed['choices'][0].get('delta', {}).get('content', '')
                                                         full_content += delta
-                                                    usage = parsed.get('usage', {})
-                                                    prompt_tokens = usage.get('prompt_tokens', 0)
-                                                    completion_tokens = usage.get('completion_tokens', 0)
                                         except:
                                             pass
                             
-                            record_usage(username, model, prompt_tokens, completion_tokens)
+                            record_usage(username, model, prompt_bytes, completion_bytes)
                             
                             assistant_msg = {'role': 'assistant'}
                             if full_thinking:
@@ -799,7 +797,7 @@ def chat():
                     prompt_bytes = len(json.dumps(messages).encode('utf-8'))
                     completion_content = resp_json.get('choices', [{}])[0].get('message', {}).get('content', '')
                     completion_bytes = len(completion_content.encode('utf-8'))
-                    record_usage(username, model, prompt_tokens, completion_tokens, prompt_bytes, completion_bytes)
+                    record_usage(username, model, prompt_bytes, completion_bytes)
                     
                     assistant_msg = {'role': 'assistant'}
                     msg = resp_json.get('choices', [{}])[0].get('message', {})

@@ -108,6 +108,24 @@ def clean_model_name(model_name):
     
     return name.strip()
 
+def is_model_failed(server_name, model_name):
+    """Check if a server+model combination has recently failed."""
+    if server_name in FAILED_MODELS_CACHE:
+        if model_name in FAILED_MODELS_CACHE[server_name]:
+            failed_time = FAILED_MODELS_CACHE[server_name][model_name]
+            if time.time() - failed_time < FAILED_MODELS_CACHE_TTL:
+                return True
+            else:
+                # Expired, remove it
+                del FAILED_MODELS_CACHE[server_name][model_name]
+    return False
+
+def record_failed_model(server_name, model_name):
+    """Record a failed model so it won't be used temporarily."""
+    if server_name not in FAILED_MODELS_CACHE:
+        FAILED_MODELS_CACHE[server_name] = {}
+    FAILED_MODELS_CACHE[server_name][model_name] = time.time()
+
 def get_any_server_data():
     """Get all models from all servers and return cleaned/merged list for 'Any' server."""
     # Check cache first
@@ -488,6 +506,11 @@ def chat():
             # Try each candidate server/model until one succeeds
             last_error = None
             for actual_server_name, actual_model in candidates:
+                # Skip if this server+model has recently failed
+                if is_model_failed(actual_server_name, actual_model):
+                    logger.info(f"Skipping failed model: {actual_server_name}/{actual_model}")
+                    continue
+                
                 # Find the actual server config
                 actual_server = None
                 for s in servers:
@@ -520,6 +543,7 @@ def chat():
                                 if response.status_code != 200:
                                     error_msg = f"API returned status {response.status_code}: {response.text[:500]}"
                                     logger.error(f"Chat API error: {error_msg}")
+                                    record_failed_model(actual_server_name, actual_model)
                                     yield f"data: {json.dumps({'error': error_msg})}\n\n"
                                     return
                                 
@@ -600,6 +624,7 @@ def chat():
                         if response.status_code != 200:
                             error_msg = f"API returned status {response.status_code}: {response.text[:500]}"
                             logger.error(f"Chat API error: {error_msg}")
+                            record_failed_model(actual_server_name, actual_model)
                             last_error = (jsonify({'error': error_msg}), response.status_code)
                             continue
                         
@@ -629,12 +654,15 @@ def chat():
                 except requests.exceptions.Timeout:
                     last_error = (jsonify({'error': 'Request timeout after 120 seconds'}), 504)
                     logger.error(f"Chat API timeout for {actual_server_name}")
+                    record_failed_model(actual_server_name, actual_model)
                 except requests.exceptions.ConnectionError as e:
                     last_error = (jsonify({'error': f'Connection error to {actual_server_name}: {str(e)[:200]}'}), 503)
                     logger.error(f"Connection error for {actual_server_name}: {e}")
+                    record_failed_model(actual_server_name, actual_model)
                 except Exception as e:
                     last_error = (jsonify({'error': f'Error: {str(e)[:200]}'}), 500)
                     logger.error(f"Chat API error for {actual_server_name}: {e}")
+                    record_failed_model(actual_server_name, actual_model)
                 # Continue to next candidate
             
             # All candidates failed

@@ -290,7 +290,7 @@ def get_models():
                 
                 if response.status_code == 200:
                     data = response.json()
-                    models = [m.get('name', '') for m in data.get('models', [])]
+                    models = [m.get('id', '') for m in data.get('data', [])]
                     return jsonify({'models': models})
                 else:
                     error_msg = f"API returned status {response.status_code}: {response.text[:200]}"
